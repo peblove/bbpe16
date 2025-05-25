@@ -7,6 +7,7 @@ pub mod punctuation;
 pub mod sequence;
 pub mod split;
 pub mod unicode_scripts;
+pub mod utf16_byte_level;
 pub mod whitespace;
 
 use serde::{Deserialize, Deserializer, Serialize};
@@ -20,6 +21,7 @@ use crate::pre_tokenizers::punctuation::Punctuation;
 use crate::pre_tokenizers::sequence::Sequence;
 use crate::pre_tokenizers::split::Split;
 use crate::pre_tokenizers::unicode_scripts::UnicodeScripts;
+use crate::pre_tokenizers::utf16_byte_level::UTF16ByteLevel;
 use crate::pre_tokenizers::whitespace::{Whitespace, WhitespaceSplit};
 use crate::{PreTokenizedString, PreTokenizer};
 
@@ -37,6 +39,7 @@ pub enum PreTokenizerWrapper {
     WhitespaceSplit(WhitespaceSplit),
     Digits(Digits),
     UnicodeScripts(UnicodeScripts),
+    UTF16ByteLevel(UTF16ByteLevel),
 }
 
 impl PreTokenizer for PreTokenizerWrapper {
@@ -53,6 +56,7 @@ impl PreTokenizer for PreTokenizerWrapper {
             Self::WhitespaceSplit(wspt) => wspt.pre_tokenize(normalized),
             Self::Digits(wspt) => wspt.pre_tokenize(normalized),
             Self::UnicodeScripts(us) => us.pre_tokenize(normalized),
+            Self::UTF16ByteLevel(utf16bl) => utf16bl.pre_tokenize(normalized),
         }
     }
 }
@@ -82,6 +86,7 @@ impl<'de> Deserialize<'de> for PreTokenizerWrapper {
             WhitespaceSplit,
             Digits,
             UnicodeScripts,
+            UTF16ByteLevel,
         }
 
         #[derive(Deserialize)]
@@ -105,6 +110,7 @@ impl<'de> Deserialize<'de> for PreTokenizerWrapper {
             WhitespaceSplit(WhitespaceSplit),
             Digits(Digits),
             UnicodeScripts(UnicodeScripts),
+            UTF16ByteLevel(UTF16ByteLevel),
         }
 
         let helper = PreTokenizerHelper::deserialize(deserializer)?;
@@ -152,6 +158,9 @@ impl<'de> Deserialize<'de> for PreTokenizerWrapper {
                     EnumType::UnicodeScripts => PreTokenizerWrapper::UnicodeScripts(
                         serde_json::from_value(values).map_err(serde::de::Error::custom)?,
                     ),
+                    EnumType::UTF16ByteLevel => PreTokenizerWrapper::UTF16ByteLevel(
+                        serde_json::from_value(values).map_err(serde::de::Error::custom)?,
+                    ),
                 }
             }
 
@@ -187,6 +196,9 @@ impl<'de> Deserialize<'de> for PreTokenizerWrapper {
                     PreTokenizerUntagged::UnicodeScripts(unicode_scripts) => {
                         PreTokenizerWrapper::UnicodeScripts(unicode_scripts)
                     }
+                    PreTokenizerUntagged::UTF16ByteLevel(utf16_byte_level) => {
+                        PreTokenizerWrapper::UTF16ByteLevel(utf16_byte_level)
+                    }
                 }
             }
         })
@@ -204,6 +216,7 @@ impl_enum_from!(Metaspace, PreTokenizerWrapper, Metaspace);
 impl_enum_from!(WhitespaceSplit, PreTokenizerWrapper, WhitespaceSplit);
 impl_enum_from!(Digits, PreTokenizerWrapper, Digits);
 impl_enum_from!(UnicodeScripts, PreTokenizerWrapper, UnicodeScripts);
+impl_enum_from!(UTF16ByteLevel, PreTokenizerWrapper, UTF16ByteLevel);
 
 #[cfg(test)]
 mod tests {

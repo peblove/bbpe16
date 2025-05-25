@@ -97,4 +97,5 @@ from .implementations import (
     CharBPETokenizer,
     SentencePieceBPETokenizer,
     SentencePieceUnigramTokenizer,
+    UTF16ByteLevelBPETokenizer,
 )

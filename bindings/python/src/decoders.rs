@@ -16,6 +16,7 @@ use tk::decoders::fuse::Fuse;
 use tk::decoders::metaspace::{Metaspace, PrependScheme};
 use tk::decoders::sequence::Sequence;
 use tk::decoders::strip::Strip;
+use tk::decoders::utf16_byte_level::UTF16ByteLevel;
 use tk::decoders::wordpiece::WordPiece;
 use tk::decoders::DecoderWrapper;
 use tk::normalizers::replace::Replace;
@@ -82,6 +83,10 @@ impl PyDecoder {
                     .into_any()
                     .into(),
                 DecoderWrapper::Sequence(_) => Py::new(py, (PySequenceDecoder {}, base))?
+                    .into_pyobject(py)?
+                    .into_any()
+                    .into(),
+                DecoderWrapper::UTF16ByteLevel(_) => Py::new(py, (PyUTF16ByteLevelDec {}, base))?
                     .into_pyobject(py)?
                     .into_any()
                     .into(),
@@ -199,6 +204,21 @@ impl PyByteLevelDec {
     #[pyo3(signature = (**_kwargs), text_signature = "(self)")]
     fn new(_kwargs: Option<&Bound<'_, PyDict>>) -> (Self, PyDecoder) {
         (PyByteLevelDec {}, ByteLevel::default().into())
+    }
+}
+
+/// UTF16ByteLevel Decoder
+///
+/// This decoder is to be used in tandem with the :class:`~tokenizers.pre_tokenizers.UTF16ByteLevel`
+/// :class:`~tokenizers.pre_tokenizers.PreTokenizer`.
+#[pyclass(extends=PyDecoder, module = "tokenizers.decoders", name = "UTF16ByteLevel")]
+pub struct PyUTF16ByteLevelDec {}
+#[pymethods]
+impl PyUTF16ByteLevelDec {
+    #[new]
+    #[pyo3(signature = (**_kwargs), text_signature = "(self)")]
+    fn new(_kwargs: Option<&Bound<'_, PyDict>>) -> (Self, PyDecoder) {
+        (PyUTF16ByteLevelDec {}, UTF16ByteLevel::default().into())
     }
 }
 
@@ -608,6 +628,7 @@ impl Decoder for PyDecoderWrapper {
 pub fn decoders(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyDecoder>()?;
     m.add_class::<PyByteLevelDec>()?;
+    m.add_class::<PyUTF16ByteLevelDec>()?;
     m.add_class::<PyReplaceDec>()?;
     m.add_class::<PyWordPieceDec>()?;
     m.add_class::<PyByteFallbackDec>()?;

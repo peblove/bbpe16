@@ -16,6 +16,7 @@ use tk::pre_tokenizers::metaspace::{Metaspace, PrependScheme};
 use tk::pre_tokenizers::punctuation::Punctuation;
 use tk::pre_tokenizers::split::Split;
 use tk::pre_tokenizers::unicode_scripts::UnicodeScripts;
+use tk::pre_tokenizers::utf16_byte_level::UTF16ByteLevel;
 use tk::pre_tokenizers::whitespace::{Whitespace, WhitespaceSplit};
 use tk::pre_tokenizers::PreTokenizerWrapper;
 use tk::tokenizer::Offsets;
@@ -114,6 +115,12 @@ impl PyPreTokenizer {
                             .into(),
                         PreTokenizerWrapper::UnicodeScripts(_) => {
                             Py::new(py, (PyUnicodeScripts {}, base))?
+                                .into_pyobject(py)?
+                                .into_any()
+                                .into()
+                        }
+                        PreTokenizerWrapper::UTF16ByteLevel(_) => {
+                            Py::new(py, (PyUTF16ByteLevel {}, base))?
                                 .into_pyobject(py)?
                                 .into_any()
                                 .into()
@@ -335,6 +342,87 @@ impl PyByteLevel {
     #[pyo3(text_signature = "()")]
     fn alphabet() -> Vec<String> {
         ByteLevel::alphabet()
+            .into_iter()
+            .map(|c| c.to_string())
+            .collect()
+    }
+}
+
+/// UTF16ByteLevel PreTokenizer
+///
+/// This pre-tokenizer takes care of replacing all bytes of the given string
+/// with a corresponding representation, as well as splitting into words.
+/// It works on UTF-16 byte level instead of UTF-8 byte level.
+///
+/// Args:
+///     add_prefix_space (:obj:`bool`, `optional`, defaults to :obj:`True`):
+///         Whether to add a space to the first word if there isn't already one. This
+///         lets us treat `hello` exactly like `say hello`.
+///     use_regex (:obj:`bool`, `optional`, defaults to :obj:`True`):
+///         Set this to :obj:`False` to prevent this `pre_tokenizer` from using
+///         the GPT2 specific regexp for spliting on whitespace.
+#[pyclass(extends=PyPreTokenizer, module = "tokenizers.pre_tokenizers", name = "UTF16ByteLevel")]
+pub struct PyUTF16ByteLevel {}
+#[pymethods]
+impl PyUTF16ByteLevel {
+    #[getter]
+    fn get_add_prefix_space(self_: PyRef<Self>) -> bool {
+        getter!(self_, UTF16ByteLevel, add_prefix_space)
+    }
+
+    #[setter]
+    fn set_add_prefix_space(self_: PyRef<Self>, add_prefix_space: bool) {
+        setter!(self_, UTF16ByteLevel, add_prefix_space, add_prefix_space);
+    }
+
+    #[getter]
+    fn get_use_regex(self_: PyRef<Self>) -> bool {
+        getter!(self_, UTF16ByteLevel, use_regex)
+    }
+
+    #[setter]
+    fn set_use_regex(self_: PyRef<Self>, use_regex: bool) {
+        setter!(self_, UTF16ByteLevel, use_regex, use_regex);
+    }
+
+    #[getter]
+    fn get_trim_offsets(self_: PyRef<Self>) -> bool {
+        getter!(self_, UTF16ByteLevel, trim_offsets)
+    }
+
+    #[setter]
+    fn set_trim_offsets(self_: PyRef<Self>, trim_offsets: bool) {
+        setter!(self_, UTF16ByteLevel, trim_offsets, trim_offsets)
+    }
+
+    #[new]
+    #[pyo3(signature = (add_prefix_space = true, use_regex = true, **_kwargs), text_signature = "(self, add_prefix_space=True, use_regex=True)")]
+    fn new(
+        add_prefix_space: bool,
+        use_regex: bool,
+        _kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> (Self, PyPreTokenizer) {
+        (
+            PyUTF16ByteLevel {},
+            UTF16ByteLevel::default()
+                .add_prefix_space(add_prefix_space)
+                .use_regex(use_regex)
+                .into(),
+        )
+    }
+
+    /// Returns the alphabet used by this PreTokenizer.
+    ///
+    /// Since the UTF16ByteLevel works at the UTF-16 byte level, it
+    /// encodes each byte value to a unique visible character. This means that there is a
+    /// total of 256 different characters composing this alphabet.
+    ///
+    /// Returns:
+    ///     :obj:`List[str]`: A list of characters that compose the alphabet
+    #[staticmethod]
+    #[pyo3(text_signature = "()")]
+    fn alphabet() -> Vec<String> {
+        UTF16ByteLevel::alphabet()
             .into_iter()
             .map(|c| c.to_string())
             .collect()
@@ -916,6 +1004,7 @@ impl PreTokenizer for PyPreTokenizerWrapper {
 pub fn pre_tokenizers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyPreTokenizer>()?;
     m.add_class::<PyByteLevel>()?;
+    m.add_class::<PyUTF16ByteLevel>()?;
     m.add_class::<PyWhitespace>()?;
     m.add_class::<PyWhitespaceSplit>()?;
     m.add_class::<PySplit>()?;

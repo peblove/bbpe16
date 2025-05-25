@@ -4,6 +4,7 @@ pub mod ctc;
 pub mod fuse;
 pub mod sequence;
 pub mod strip;
+pub mod utf16_byte_level;
 pub mod wordpiece;
 
 // Re-export these as decoders
@@ -22,6 +23,7 @@ use crate::decoders::wordpiece::WordPiece;
 use crate::normalizers::replace::Replace;
 use crate::pre_tokenizers::byte_level::ByteLevel;
 use crate::pre_tokenizers::metaspace::Metaspace;
+use crate::pre_tokenizers::utf16_byte_level::UTF16ByteLevel;
 use crate::{Decoder, Result};
 
 #[derive(Serialize, Clone, Debug)]
@@ -37,6 +39,7 @@ pub enum DecoderWrapper {
     Fuse(Fuse),
     Strip(Strip),
     ByteFallback(ByteFallback),
+    UTF16ByteLevel(UTF16ByteLevel),
 }
 
 impl<'de> Deserialize<'de> for DecoderWrapper {
@@ -63,6 +66,7 @@ impl<'de> Deserialize<'de> for DecoderWrapper {
             Fuse,
             Strip,
             ByteFallback,
+            UTF16ByteLevel,
         }
 
         #[derive(Deserialize)]
@@ -85,6 +89,7 @@ impl<'de> Deserialize<'de> for DecoderWrapper {
             Fuse(Fuse),
             Strip(Strip),
             ByteFallback(ByteFallback),
+            UTF16ByteLevel(UTF16ByteLevel),
         }
 
         let helper = DecoderHelper::deserialize(deserializer).expect("Helper");
@@ -128,6 +133,9 @@ impl<'de> Deserialize<'de> for DecoderWrapper {
                     EnumType::ByteFallback => DecoderWrapper::ByteFallback(
                         serde_json::from_value(values).map_err(serde::de::Error::custom)?,
                     ),
+                    EnumType::UTF16ByteLevel => DecoderWrapper::UTF16ByteLevel(
+                        serde_json::from_value(values).map_err(serde::de::Error::custom)?,
+                    ),
                 }
             }
             DecoderHelper::Legacy(value) => {
@@ -143,6 +151,7 @@ impl<'de> Deserialize<'de> for DecoderWrapper {
                     DecoderUntagged::Fuse(dec) => DecoderWrapper::Fuse(dec),
                     DecoderUntagged::Strip(dec) => DecoderWrapper::Strip(dec),
                     DecoderUntagged::ByteFallback(dec) => DecoderWrapper::ByteFallback(dec),
+                    DecoderUntagged::UTF16ByteLevel(dec) => DecoderWrapper::UTF16ByteLevel(dec),
                 }
             }
         })
@@ -162,6 +171,7 @@ impl Decoder for DecoderWrapper {
             Self::ByteFallback(bf) => bf.decode_chain(tokens),
             Self::Strip(bf) => bf.decode_chain(tokens),
             Self::Fuse(bf) => bf.decode_chain(tokens),
+            Self::UTF16ByteLevel(utf16bl) => utf16bl.decode_chain(tokens),
         }
     }
 }
@@ -176,6 +186,7 @@ impl_enum_from!(WordPiece, DecoderWrapper, WordPiece);
 impl_enum_from!(CTC, DecoderWrapper, CTC);
 impl_enum_from!(Sequence, DecoderWrapper, Sequence);
 impl_enum_from!(Replace, DecoderWrapper, Replace);
+impl_enum_from!(UTF16ByteLevel, DecoderWrapper, UTF16ByteLevel);
 
 #[cfg(test)]
 mod tests {

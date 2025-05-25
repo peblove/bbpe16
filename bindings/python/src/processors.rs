@@ -16,6 +16,7 @@ use tk::processors::bert::BertProcessing;
 use tk::processors::byte_level::ByteLevel;
 use tk::processors::roberta::RobertaProcessing;
 use tk::processors::template::{SpecialToken, Template};
+use tk::processors::utf16_byte_level::UTF16ByteLevel;
 use tk::processors::PostProcessorWrapper;
 use tk::{Encoding, PostProcessor};
 use tokenizers as tk;
@@ -82,6 +83,10 @@ impl PyPostProcessor {
                     .into_any()
                     .into(),
                 PostProcessorWrapper::Sequence(_) => Py::new(py, (PySequence {}, base))?
+                    .into_pyobject(py)?
+                    .into_any()
+                    .into(),
+                PostProcessorWrapper::UTF16ByteLevel(_) => Py::new(py, (PyUTF16ByteLevel {}, base))?
                     .into_pyobject(py)?
                     .into_any()
                     .into(),
@@ -546,6 +551,74 @@ impl PyByteLevel {
     }
 }
 
+/// This post-processor takes care of trimming the offsets for UTF16ByteLevel.
+///
+/// By default, the UTF16ByteLevel BPE might include whitespaces in the produced tokens. If you don't
+/// want the offsets to include these whitespaces, then this PostProcessor must be used.
+///
+/// Args:
+///     trim_offsets (:obj:`bool`):
+///         Whether to trim the whitespaces from the produced offsets.
+#[pyclass(extends=PyPostProcessor, module = "tokenizers.processors", name = "UTF16ByteLevel")]
+pub struct PyUTF16ByteLevel {}
+#[pymethods]
+impl PyUTF16ByteLevel {
+    #[new]
+    #[pyo3(signature = (add_prefix_space = None, trim_offsets = None, use_regex = None, **_kwargs), text_signature = "(self, trim_offsets=True)")]
+    fn new(
+        add_prefix_space: Option<bool>,
+        trim_offsets: Option<bool>,
+        use_regex: Option<bool>,
+        _kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> (Self, PyPostProcessor) {
+        let mut utf16_byte_level = UTF16ByteLevel::default();
+
+        if let Some(aps) = add_prefix_space {
+            utf16_byte_level = utf16_byte_level.add_prefix_space(aps);
+        }
+
+        if let Some(to) = trim_offsets {
+            utf16_byte_level = utf16_byte_level.trim_offsets(to);
+        }
+
+        if let Some(ur) = use_regex {
+            utf16_byte_level = utf16_byte_level.use_regex(ur);
+        }
+
+        (PyUTF16ByteLevel {}, utf16_byte_level.into())
+    }
+
+    #[getter]
+    fn get_add_prefix_space(self_: PyRef<Self>) -> bool {
+        getter!(self_, UTF16ByteLevel, add_prefix_space)
+    }
+
+    #[setter]
+    fn set_add_prefix_space(self_: PyRef<Self>, add_prefix_space: bool) {
+        setter!(self_, UTF16ByteLevel, add_prefix_space, add_prefix_space)
+    }
+
+    #[getter]
+    fn get_trim_offsets(self_: PyRef<Self>) -> bool {
+        getter!(self_, UTF16ByteLevel, trim_offsets)
+    }
+
+    #[setter]
+    fn set_trim_offsets(self_: PyRef<Self>, trim_offsets: bool) {
+        setter!(self_, UTF16ByteLevel, trim_offsets, trim_offsets)
+    }
+
+    #[getter]
+    fn get_use_regex(self_: PyRef<Self>) -> bool {
+        getter!(self_, UTF16ByteLevel, use_regex)
+    }
+
+    #[setter]
+    fn set_use_regex(self_: PyRef<Self>, use_regex: bool) {
+        setter!(self_, UTF16ByteLevel, use_regex, use_regex)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct PySpecialToken(SpecialToken);
 
@@ -815,6 +888,7 @@ pub fn processors(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyBertProcessing>()?;
     m.add_class::<PyRobertaProcessing>()?;
     m.add_class::<PyByteLevel>()?;
+    m.add_class::<PyUTF16ByteLevel>()?;
     m.add_class::<PyTemplateProcessing>()?;
     m.add_class::<PySequence>()?;
     Ok(())

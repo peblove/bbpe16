@@ -201,7 +201,7 @@ impl Word {
                 let target_new_pair = (self.symbols[top.pos].c, right.c);
                 if merges
                     .get(&target_new_pair)
-                    .is_none_or(|(_, new_id)| *new_id != top.new_id)
+                    .map_or(true, |(_, new_id)| *new_id != top.new_id)
                 {
                     continue;
                 }

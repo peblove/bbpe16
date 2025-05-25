@@ -12,4 +12,5 @@ Metaspace = decoders.Metaspace
 BPEDecoder = decoders.BPEDecoder
 CTC = decoders.CTC
 Sequence = decoders.Sequence
+UTF16ByteLevel = decoders.UTF16ByteLevel
 DecodeStream = decoders.DecodeStream

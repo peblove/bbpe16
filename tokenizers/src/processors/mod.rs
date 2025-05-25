@@ -5,10 +5,12 @@ pub mod template;
 
 // Re-export these as processors
 pub use super::pre_tokenizers::byte_level;
+pub use super::pre_tokenizers::utf16_byte_level;
 
 use serde::{Deserialize, Serialize};
 
 use crate::pre_tokenizers::byte_level::ByteLevel;
+use crate::pre_tokenizers::utf16_byte_level::UTF16ByteLevel;
 use crate::processors::bert::BertProcessing;
 use crate::processors::roberta::RobertaProcessing;
 use crate::processors::sequence::Sequence;
@@ -22,6 +24,7 @@ pub enum PostProcessorWrapper {
     Roberta(RobertaProcessing),
     Bert(BertProcessing),
     ByteLevel(ByteLevel),
+    UTF16ByteLevel(UTF16ByteLevel),
     Template(TemplateProcessing),
     Sequence(Sequence),
 }
@@ -31,6 +34,7 @@ impl PostProcessor for PostProcessorWrapper {
         match self {
             Self::Bert(bert) => bert.added_tokens(is_pair),
             Self::ByteLevel(bl) => bl.added_tokens(is_pair),
+            Self::UTF16ByteLevel(utf16bl) => utf16bl.added_tokens(is_pair),
             Self::Roberta(roberta) => roberta.added_tokens(is_pair),
             Self::Template(template) => template.added_tokens(is_pair),
             Self::Sequence(bl) => bl.added_tokens(is_pair),
@@ -45,6 +49,7 @@ impl PostProcessor for PostProcessorWrapper {
         match self {
             Self::Bert(bert) => bert.process_encodings(encodings, add_special_tokens),
             Self::ByteLevel(bl) => bl.process_encodings(encodings, add_special_tokens),
+            Self::UTF16ByteLevel(utf16bl) => utf16bl.process_encodings(encodings, add_special_tokens),
             Self::Roberta(roberta) => roberta.process_encodings(encodings, add_special_tokens),
             Self::Template(template) => template.process_encodings(encodings, add_special_tokens),
             Self::Sequence(bl) => bl.process_encodings(encodings, add_special_tokens),
@@ -54,6 +59,7 @@ impl PostProcessor for PostProcessorWrapper {
 
 impl_enum_from!(BertProcessing, PostProcessorWrapper, Bert);
 impl_enum_from!(ByteLevel, PostProcessorWrapper, ByteLevel);
+impl_enum_from!(UTF16ByteLevel, PostProcessorWrapper, UTF16ByteLevel);
 impl_enum_from!(RobertaProcessing, PostProcessorWrapper, Roberta);
 impl_enum_from!(TemplateProcessing, PostProcessorWrapper, Template);
 impl_enum_from!(Sequence, PostProcessorWrapper, Sequence);
