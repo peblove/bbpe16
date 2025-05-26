@@ -13,6 +13,71 @@
     </a>
 </p>
 
+## UTF16ByteLevelBPETokenizer
+
+A specialized tokenizer optimized for CJK (Chinese, Japanese, Korean) languages that processes text at the UTF-16 byte level while maintaining compatibility with the standard ByteLevel alphabet.
+
+### Key Advantages:
+- **26.3% fewer tokens** for Chinese text
+- **9.2% fewer tokens** for Korean text  
+- **6.7% fewer tokens** for multilingual content
+- **100% accuracy** maintained across all languages
+- Uses standard ByteLevel.alphabet (256 characters)
+
+### Usage:
+```python
+from tokenizers.implementations import UTF16ByteLevelBPETokenizer
+
+# Initialize tokenizer
+tokenizer = UTF16ByteLevelBPETokenizer()
+
+# Train on your dataset
+tokenizer.train(files=["training_data.txt"], vocab_size=1000)
+
+# Encode CJK text efficiently
+output = tokenizer.encode("안녕하세요 你好 こんにちは")
+print(f"Tokens: {len(output.tokens)}")  # Significantly fewer tokens for CJK text
+```
+
+### When to Use:
+- Processing primarily CJK languages
+- Building applications for Asian markets
+- Token efficiency is critical for CJK text
+- Multilingual models with significant non-ASCII content
+
+### Evaluation Results:
+Comprehensive testing on 434 test cases across Korean, English, Chinese, and mixed languages shows significant improvements for CJK languages while maintaining perfect roundtrip accuracy. See `~/work/data/utf16_tokenizer_evaluation/` for detailed results.
+
+### Citation:
+If you use UTF16ByteLevelBPETokenizer in your research or applications, please cite:
+
+```bibtex
+@misc{kim2025utf16bytelevel,
+  title={UTF16ByteLevelBPETokenizer: Enhanced Tokenization for CJK Languages},
+  author={Hyunsik Kim},
+  year={2025},
+  month={May},
+  note={Implementation based on HuggingFace Tokenizers library},
+  email={avantkim@gmail.com},
+  url={https://github.com/peblove/tokenizers}
+}
+```
+
+### Technical References:
+- **Base Implementation**: HuggingFace Tokenizers - [https://github.com/huggingface/tokenizers](https://github.com/huggingface/tokenizers)
+- **GPT-2 Byte-Level BPE**: Radford et al. (2019) - [https://github.com/openai/gpt-2](https://github.com/openai/gpt-2)
+- **UTF-16 Encoding Standard**: Unicode Consortium - [https://unicode.org/standard/standard.html](https://unicode.org/standard/standard.html)
+
+### Performance Benchmarks:
+| Language | Standard BPE | UTF16ByteLevel BPE | Improvement |
+|----------|-------------|-------------------|-------------|
+| Chinese  | 29.7 tokens | 21.9 tokens | **26.3% reduction** |
+| Korean   | 20.7 tokens | 18.8 tokens | **9.2% reduction** |
+| Mixed    | 28.2 tokens | 26.3 tokens | **6.7% reduction** |
+| English  | 24.5 tokens | 25.5 tokens | 4.1% increase |
+
+*Results based on comprehensive evaluation with 1000-token vocabularies trained on 10MB multilingual dataset.*
+
 Provides an implementation of today's most used tokenizers, with a focus on performance and
 versatility.
 
@@ -92,69 +157,3 @@ print(output.tokens)
 Check the [documentation](https://huggingface.co/docs/tokenizers/index)
 or the [quicktour](https://huggingface.co/docs/tokenizers/quicktour) to learn more!
 
-## UTF16ByteLevelBPETokenizer
-
-**Author:** Hyunsik Kim <avantkim@gmail.com>
-
-A specialized tokenizer optimized for CJK (Chinese, Japanese, Korean) languages that processes text at the UTF-16 byte level while maintaining compatibility with the standard ByteLevel alphabet.
-
-### Key Advantages:
-- **26.3% fewer tokens** for Chinese text
-- **9.2% fewer tokens** for Korean text  
-- **6.7% fewer tokens** for multilingual content
-- **100% accuracy** maintained across all languages
-- Uses standard ByteLevel.alphabet (256 characters)
-
-### Usage:
-```python
-from tokenizers.implementations import UTF16ByteLevelBPETokenizer
-
-# Initialize tokenizer
-tokenizer = UTF16ByteLevelBPETokenizer()
-
-# Train on your dataset
-tokenizer.train(files=["training_data.txt"], vocab_size=1000)
-
-# Encode CJK text efficiently
-output = tokenizer.encode("안녕하세요 你好 こんにちは")
-print(f"Tokens: {len(output.tokens)}")  # Significantly fewer tokens for CJK text
-```
-
-### When to Use:
-- Processing primarily CJK languages
-- Building applications for Asian markets
-- Token efficiency is critical for CJK text
-- Multilingual models with significant non-ASCII content
-
-### Evaluation Results:
-Comprehensive testing on 434 test cases across Korean, English, Chinese, and mixed languages shows significant improvements for CJK languages while maintaining perfect roundtrip accuracy. See `~/work/data/utf16_tokenizer_evaluation/` for detailed results.
-
-### Citation:
-If you use UTF16ByteLevelBPETokenizer in your research or applications, please cite:
-
-```bibtex
-@misc{kim2025utf16bytelevel,
-  title={UTF16ByteLevelBPETokenizer: Enhanced Tokenization for CJK Languages},
-  author={Hyunsik Kim},
-  year={2025},
-  month={May},
-  note={Implementation based on HuggingFace Tokenizers library},
-  email={avantkim@gmail.com},
-  url={https://github.com/peblove/tokenizers}
-}
-```
-
-### Technical References:
-- **Base Implementation**: HuggingFace Tokenizers - [https://github.com/huggingface/tokenizers](https://github.com/huggingface/tokenizers)
-- **GPT-2 Byte-Level BPE**: Radford et al. (2019) - [https://github.com/openai/gpt-2](https://github.com/openai/gpt-2)
-- **UTF-16 Encoding Standard**: Unicode Consortium - [https://unicode.org/standard/standard.html](https://unicode.org/standard/standard.html)
-
-### Performance Benchmarks:
-| Language | Standard BPE | UTF16ByteLevel BPE | Improvement |
-|----------|-------------|-------------------|-------------|
-| Chinese  | 29.7 tokens | 21.9 tokens | **26.3% reduction** |
-| Korean   | 20.7 tokens | 18.8 tokens | **9.2% reduction** |
-| Mixed    | 28.2 tokens | 26.3 tokens | **6.7% reduction** |
-| English  | 24.5 tokens | 25.5 tokens | 4.1% increase |
-
-*Results based on comprehensive evaluation with 1000-token vocabularies trained on 10MB multilingual dataset.*
