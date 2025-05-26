@@ -36,12 +36,98 @@ from collections import defaultdict, Counter
 import time
 import pickle
 
+# Check and install required packages with version requirements
+def check_and_install_packages():
+    """Check package versions and install/upgrade if necessary"""
+    import subprocess
+    import sys
+    
+    # Required packages with minimum versions
+    required_packages = {
+        'datasets': '3.6.0',
+        'huggingface_hub': '0.16.0',
+        'librosa': '0.10.0',
+        'soundfile': '0.12.0',
+        'pandas': '1.5.0',
+        'numpy': '1.21.0',
+        'tqdm': '4.64.0'
+    }
+    
+    def get_package_version(package_name):
+        """Get installed package version"""
+        try:
+            import importlib.metadata
+            return importlib.metadata.version(package_name)
+        except:
+            try:
+                # Fallback for older Python versions
+                import pkg_resources
+                return pkg_resources.get_distribution(package_name).version
+            except:
+                return None
+    
+    def version_compare(version1, version2):
+        """Compare two version strings"""
+        def normalize(v):
+            return [int(x) for x in v.split('.')]
+        try:
+            return normalize(version1) >= normalize(version2)
+        except:
+            return False
+    
+    packages_to_install = []
+    
+    print("🔍 Checking package versions...")
+    for package, min_version in required_packages.items():
+        current_version = get_package_version(package)
+        if current_version is None:
+            print(f"📦 {package} not found, will install version {min_version}+")
+            packages_to_install.append(f"{package}>={min_version}")
+        elif not version_compare(current_version, min_version):
+            print(f"📦 {package} {current_version} < {min_version}, will upgrade")
+            packages_to_install.append(f"{package}>={min_version}")
+        else:
+            print(f"✅ {package} {current_version} >= {min_version}")
+    
+    if packages_to_install:
+        print(f"\n🔧 Installing/upgrading packages: {', '.join(packages_to_install)}")
+        try:
+            subprocess.check_call([
+                sys.executable, "-m", "pip", "install", "--upgrade"
+            ] + packages_to_install)
+            print("✅ Package installation completed successfully!")
+            print("🔄 Please restart the script to use updated packages.")
+            return False  # Indicate restart needed
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Failed to install packages: {e}")
+            print("Please install manually:")
+            for pkg in packages_to_install:
+                print(f"  pip install --upgrade {pkg}")
+            sys.exit(1)
+    
+    return True  # All packages are up to date
+
+# Check packages before importing (only if not already checked)
+if __name__ == "__main__" and not globals().get('_packages_checked'):
+    if not check_and_install_packages():
+        print("\n🔄 Packages have been updated. Please run the script again.")
+        sys.exit(0)
+    globals()['_packages_checked'] = True
+
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-from datasets import load_dataset, DatasetDict
-import librosa
-import soundfile as sf
+
+# Import datasets with error handling
+try:
+    from datasets import load_dataset, DatasetDict
+    import librosa
+    import soundfile as sf
+except ImportError as e:
+    print(f"❌ Missing required libraries after installation: {e}")
+    print("Please try running the script again or install manually:")
+    print("pip install --upgrade datasets>=3.6.0 huggingface_hub>=0.16.0 librosa>=0.10.0 soundfile>=0.12.0")
+    sys.exit(1)
 
 # Configure logging
 logging.basicConfig(
@@ -184,7 +270,7 @@ class EnhancedASRDownloader:
             'splits': ['train', 'validation', 'test']
         },
         'aishell': {
-            'dataset_id': 'speechcolab/aishell_1',
+            'dataset_id': 'AISHELL/AISHELL-1',
             'audio_column': 'audio',
             'text_column': 'transcription',
             'splits': ['train', 'validation', 'test']
@@ -286,13 +372,36 @@ class EnhancedASRDownloader:
             if self.hf_token:
                 download_params['token'] = self.hf_token
             
-            # Dataset-specific download logic
+            # Dataset-specific download logic with error handling
+            def try_load_dataset(dataset_id, lang_config=None, params=None):
+                """Helper function to try loading dataset with different parameter combinations"""
+                if params is None:
+                    params = {}
+                
+                # Try with all parameters first
+                try:
+                    if lang_config:
+                        return load_dataset(dataset_id, lang_config, **params)
+                    else:
+                        return load_dataset(dataset_id, **params)
+                except Exception as e:
+                    if "trust_remote_code" in str(e) or "doesn't have a trust_remote_code key" in str(e):
+                        # Remove trust_remote_code and try again
+                        logger.warning("trust_remote_code not supported, retrying without it...")
+                        params_no_trust = {k: v for k, v in params.items() if k != 'trust_remote_code'}
+                        if lang_config:
+                            return load_dataset(dataset_id, lang_config, **params_no_trust)
+                        else:
+                            return load_dataset(dataset_id, **params_no_trust)
+                    else:
+                        raise e
+            
             if dataset_name == 'common_voice':
-                dataset = load_dataset(dataset_id, dataset_lang, **download_params)
+                dataset = try_load_dataset(dataset_id, dataset_lang, download_params)
             elif dataset_name == 'fleurs':
-                dataset = load_dataset(dataset_id, dataset_lang, **download_params)
+                dataset = try_load_dataset(dataset_id, dataset_lang, download_params)
             elif dataset_name == 'aishell':
-                dataset = load_dataset(dataset_id, **download_params)
+                dataset = try_load_dataset(dataset_id, None, download_params)
             else:
                 logger.error(f"Unknown dataset: {dataset_name}")
                 return None
