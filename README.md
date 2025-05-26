@@ -46,7 +46,7 @@ print(f"Tokens: {len(output.tokens)}")  # Significantly fewer tokens for CJK tex
 - Multilingual models with significant non-ASCII content
 
 ### Evaluation Results:
-Comprehensive testing on 434 test cases across Korean, English, Chinese, and mixed languages shows significant improvements for CJK languages while maintaining perfect roundtrip accuracy. See `~/work/data/utf16_tokenizer_evaluation/` for detailed results.
+Comprehensive testing on 434 test cases across Korean, English, Chinese, and mixed languages shows significant improvements for CJK languages while maintaining perfect roundtrip accuracy.
 
 ### Citation:
 If you use UTF16ByteLevelBPETokenizer in your research or applications, please cite:
