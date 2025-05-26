@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use std::sync::LazyLock;
+use once_cell::sync::Lazy;
 
 use crate::utils::SysRegex;
 use serde::{Deserialize, Serialize};
@@ -99,14 +99,14 @@ pub(crate) fn utf16_bytes_to_utf8(bytes: &[u8]) -> Result<String> {
 
 /// Regex that matches exactly one token.
 /// Same as the original ByteLevel tokenizer regex from GPT-2
-static RE: LazyLock<SysRegex> = LazyLock::new(|| {
+static RE: Lazy<SysRegex> = Lazy::new(|| {
     SysRegex::new(r"'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+")
         .unwrap()
 });
 
-static UTF16_BYTES_CHAR: LazyLock<HashMap<u8, char>> = LazyLock::new(utf16_bytes_char);
-static CHAR_UTF16_BYTES: LazyLock<HashMap<char, u8>> =
-    LazyLock::new(|| utf16_bytes_char().into_iter().map(|(c, b)| (b, c)).collect());
+static UTF16_BYTES_CHAR: Lazy<HashMap<u8, char>> = Lazy::new(utf16_bytes_char);
+static CHAR_UTF16_BYTES: Lazy<HashMap<char, u8>> =
+    Lazy::new(|| utf16_bytes_char().into_iter().map(|(c, b)| (b, c)).collect());
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 /// Provides all the necessary steps to handle the BPE tokenization at the UTF-16 byte-level.

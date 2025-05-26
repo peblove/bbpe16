@@ -1,7 +1,7 @@
 use crate::tokenizer::{Decoder, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::LazyLock;
+use once_cell::sync::Lazy;
 
 /// UTF-16 byte level decoder
 /// 
@@ -57,8 +57,8 @@ fn utf16_bytes_to_utf8(bytes: &[u8]) -> Result<String> {
         .map_err(|e| format!("Invalid UTF-16 sequence: {}", e).into())
 }
 
-static CHAR_UTF16_BYTES: LazyLock<HashMap<char, u8>> =
-    LazyLock::new(|| utf16_bytes_char().into_iter().map(|(c, b)| (b, c)).collect());
+static CHAR_UTF16_BYTES: Lazy<HashMap<char, u8>> =
+    Lazy::new(|| utf16_bytes_char().into_iter().map(|(c, b)| (b, c)).collect());
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 /// UTF16ByteLevel Decoder

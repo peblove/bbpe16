@@ -101,7 +101,7 @@ class UTF16ByteLevelBPETokenizer(BaseTokenizer):
             min_frequency=min_frequency,
             show_progress=show_progress,
             special_tokens=special_tokens,
-            initial_alphabet=pre_tokenizers.ByteLevel.alphabet(),
+            initial_alphabet=pre_tokenizers.UTF16ByteLevel.alphabet(),
         )
         if isinstance(files, str):
             files = [files]
@@ -123,7 +123,7 @@ class UTF16ByteLevelBPETokenizer(BaseTokenizer):
             min_frequency=min_frequency,
             show_progress=show_progress,
             special_tokens=special_tokens,
-            initial_alphabet=pre_tokenizers.ByteLevel.alphabet(),
+            initial_alphabet=pre_tokenizers.UTF16ByteLevel.alphabet(),
         )
         self._tokenizer.train_from_iterator(
             iterator,

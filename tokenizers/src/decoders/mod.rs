@@ -19,11 +19,11 @@ use crate::decoders::ctc::CTC;
 use crate::decoders::fuse::Fuse;
 use crate::decoders::sequence::Sequence;
 use crate::decoders::strip::Strip;
+use crate::decoders::utf16_byte_level::UTF16ByteLevel;
 use crate::decoders::wordpiece::WordPiece;
 use crate::normalizers::replace::Replace;
 use crate::pre_tokenizers::byte_level::ByteLevel;
 use crate::pre_tokenizers::metaspace::Metaspace;
-use crate::pre_tokenizers::utf16_byte_level::UTF16ByteLevel;
 use crate::{Decoder, Result};
 
 #[derive(Serialize, Clone, Debug)]
