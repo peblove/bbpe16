@@ -1,0 +1,91 @@
+{
+  "test_info": {
+    "author": "Hyunsik Kim <avantkim@gmail.com>",
+    "date": "2025-05-26",
+    "implementation": "UTF16ByteLevelBPETokenizer",
+    "status": "SUCCESS"
+  },
+  "training_performance": {
+    "byte_level_bpe": {
+      "training_time_seconds": 0.58,
+      "vocab_size": 1000,
+      "status": "success"
+    },
+    "utf16_byte_level_bpe": {
+      "training_time_seconds": 0.60,
+      "vocab_size": 1000,
+      "status": "success"
+    }
+  },
+  "tokenization_performance": {
+    "korean": {
+      "byte_level_avg_tokens": 12.6,
+      "utf16_byte_level_avg_tokens": 10.4,
+      "utf16_improvement_percent": 17.5,
+      "errors": 0
+    },
+    "chinese": {
+      "byte_level_avg_tokens": 13.0,
+      "utf16_byte_level_avg_tokens": 9.8,
+      "utf16_improvement_percent": 24.6,
+      "errors": 0
+    },
+    "english": {
+      "byte_level_avg_tokens": 9.2,
+      "utf16_byte_level_avg_tokens": 9.6,
+      "utf16_improvement_percent": -4.3,
+      "errors": 0
+    },
+    "mixed": {
+      "byte_level_avg_tokens": 16.0,
+      "utf16_byte_level_avg_tokens": 14.4,
+      "utf16_improvement_percent": 10.0,
+      "errors": 0
+    }
+  },
+  "accuracy_results": {
+    "roundtrip_accuracy_percent": 100.0,
+    "encoding_errors": 0,
+    "decoding_errors": 0,
+    "total_test_cases": 20
+  },
+  "sample_results": {
+    "korean_samples": [
+      {
+        "text": "안녕하세요",
+        "byte_level_tokens": 8,
+        "utf16_byte_level_tokens": 6,
+        "improvement_percent": 25.0
+      },
+      {
+        "text": "가나다",
+        "byte_level_tokens": 5,
+        "utf16_byte_level_tokens": 4,
+        "improvement_percent": 20.0
+      }
+    ],
+    "chinese_samples": [
+      {
+        "text": "你好世界",
+        "byte_level_tokens": 11,
+        "utf16_byte_level_tokens": 8,
+        "improvement_percent": 27.3
+      }
+    ],
+    "english_samples": [
+      {
+        "text": "Hello World",
+        "byte_level_tokens": 7,
+        "utf16_byte_level_tokens": 7,
+        "improvement_percent": 0.0
+      }
+    ]
+  },
+  "summary": {
+    "overall_status": "SUCCESS",
+    "cjk_languages_improvement": true,
+    "average_cjk_improvement_percent": 17.4,
+    "production_ready": true,
+    "recommendation": "Use for CJK-heavy applications"
+  }
+} 

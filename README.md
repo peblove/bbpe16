@@ -135,7 +135,7 @@ If you use UTF16ByteLevelBPETokenizer in your research or applications, please c
 ```bibtex
 @misc{kim2025utf16bytelevel,
   title={UTF16ByteLevelBPETokenizer: Enhanced Tokenization for CJK Languages},
-  author={Kim, Hyunsik},
+  author={Hyunsik Kim},
   year={2025},
   month={May},
   note={Implementation based on HuggingFace Tokenizers library},
