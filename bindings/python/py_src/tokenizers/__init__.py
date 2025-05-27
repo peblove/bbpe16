@@ -110,14 +110,14 @@ def _smart_from_file(path: str, smart_load: bool = True):
     if smart_load:
         try:
             # Import here to avoid circular import
-            from .implementations import smart_tokenizer_from_file
-            return smart_tokenizer_from_file(path)
+            from .implementations import smart_tokenizer_from_file_with_original
+            return smart_tokenizer_from_file_with_original(path, _original_from_str)
         except Exception:
             # Fall back to standard loading if smart loading fails
             pass
     
     # Standard loading
-    return _Tokenizer.from_file(path)
+    return _original_from_file(path)
 
 def _smart_from_str(json_str: str, smart_load: bool = True):
     """
@@ -134,14 +134,14 @@ def _smart_from_str(json_str: str, smart_load: bool = True):
     if smart_load:
         try:
             # Import here to avoid circular import
-            from .implementations import smart_tokenizer_from_str
-            return smart_tokenizer_from_str(json_str)
+            from .implementations import smart_tokenizer_from_str_with_original
+            return smart_tokenizer_from_str_with_original(json_str, _original_from_str)
         except Exception:
             # Fall back to standard loading if smart loading fails
             pass
     
     # Standard loading
-    return _Tokenizer.from_str(json_str)
+    return _original_from_str(json_str)
 
 def _detect_type(path: str) -> str:
     """
@@ -157,10 +157,20 @@ def _detect_type(path: str) -> str:
     from .implementations import detect_tokenizer_type
     return detect_tokenizer_type(path)
 
-# Monkey patch the Tokenizer class to add smart loading capabilities
+# Store original methods
+_original_from_file = _Tokenizer.from_file
+_original_from_str = _Tokenizer.from_str
+
+# Monkey patch the Tokenizer class to use smart loading by default
+_Tokenizer.from_file = staticmethod(lambda path: _smart_from_file(path, smart_load=True))
+_Tokenizer.from_str = staticmethod(lambda json_str: _smart_from_str(json_str, smart_load=True))
+
+# Add additional methods
 _Tokenizer.smart_from_file = staticmethod(_smart_from_file)
 _Tokenizer.smart_from_str = staticmethod(_smart_from_str)
 _Tokenizer.detect_type = staticmethod(_detect_type)
+_Tokenizer.original_from_file = staticmethod(_original_from_file)
+_Tokenizer.original_from_str = staticmethod(_original_from_str)
 
-# Export the original Tokenizer class with added functionality
+# Export the enhanced Tokenizer class
 Tokenizer = _Tokenizer
