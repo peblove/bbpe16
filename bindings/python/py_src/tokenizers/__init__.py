@@ -94,76 +94,73 @@ from .tokenizers import (
 
 # Import implementations will be done lazily to avoid circular import
 
+# Add smart loading methods to the existing Tokenizer class
+def _smart_from_file(path: str, smart_load: bool = True):
+    """
+    Instantiate a new Tokenizer from the file at the given path.
+    
+    Args:
+        path (str): A path to a local JSON file representing a previously serialized Tokenizer
+        smart_load (bool): If True, automatically detect and load the appropriate tokenizer type.
+                          If False, use the standard loading method.
+    
+    Returns:
+        Tokenizer or specialized tokenizer: The appropriate tokenizer instance
+    """
+    if smart_load:
+        try:
+            # Import here to avoid circular import
+            from .implementations import smart_tokenizer_from_file
+            return smart_tokenizer_from_file(path)
+        except Exception:
+            # Fall back to standard loading if smart loading fails
+            pass
+    
+    # Standard loading
+    return _Tokenizer.from_file(path)
 
-class Tokenizer(_Tokenizer):
+def _smart_from_str(json_str: str, smart_load: bool = True):
     """
-    Enhanced Tokenizer class with smart loading capabilities.
+    Instantiate a new Tokenizer from the given JSON string.
     
-    This class extends the base Tokenizer with automatic type detection
-    for ByteLevelBPE and UTF16ByteLevelBPE tokenizers.
+    Args:
+        json_str (str): A valid JSON string representing a previously serialized Tokenizer
+        smart_load (bool): If True, automatically detect and load the appropriate tokenizer type.
+                          If False, use the standard loading method.
+    
+    Returns:
+        Tokenizer or specialized tokenizer: The appropriate tokenizer instance
     """
+    if smart_load:
+        try:
+            # Import here to avoid circular import
+            from .implementations import smart_tokenizer_from_str
+            return smart_tokenizer_from_str(json_str)
+        except Exception:
+            # Fall back to standard loading if smart loading fails
+            pass
     
-    @staticmethod
-    def from_file(path: str, smart_load: bool = True):
-        """
-        Instantiate a new Tokenizer from the file at the given path.
-        
-        Args:
-            path (str): A path to a local JSON file representing a previously serialized Tokenizer
-            smart_load (bool): If True, automatically detect and load the appropriate tokenizer type.
-                              If False, use the standard loading method.
-        
-        Returns:
-            Tokenizer or specialized tokenizer: The appropriate tokenizer instance
-        """
-        if smart_load:
-            try:
-                # Import here to avoid circular import
-                from .implementations import smart_tokenizer_from_file
-                return smart_tokenizer_from_file(path)
-            except Exception:
-                # Fall back to standard loading if smart loading fails
-                pass
-        
-        # Standard loading
-        return _Tokenizer.from_file(path)
+    # Standard loading
+    return _Tokenizer.from_str(json_str)
+
+def _detect_type(path: str) -> str:
+    """
+    Detect the tokenizer type from a JSON file without loading the full tokenizer.
     
-    @staticmethod
-    def from_str(json_str: str, smart_load: bool = True):
-        """
-        Instantiate a new Tokenizer from the given JSON string.
+    Args:
+        path (str): Path to the tokenizer JSON file
         
-        Args:
-            json_str (str): A valid JSON string representing a previously serialized Tokenizer
-            smart_load (bool): If True, automatically detect and load the appropriate tokenizer type.
-                              If False, use the standard loading method.
-        
-        Returns:
-            Tokenizer or specialized tokenizer: The appropriate tokenizer instance
-        """
-        if smart_load:
-            try:
-                # Import here to avoid circular import
-                from .implementations import smart_tokenizer_from_str
-                return smart_tokenizer_from_str(json_str)
-            except Exception:
-                # Fall back to standard loading if smart loading fails
-                pass
-        
-        # Standard loading
-        return _Tokenizer.from_str(json_str)
-    
-    @staticmethod
-    def detect_type(path: str) -> str:
-        """
-        Detect the tokenizer type from a JSON file without loading the full tokenizer.
-        
-        Args:
-            path (str): Path to the tokenizer JSON file
-            
-        Returns:
-            str: The detected tokenizer type ('UTF16ByteLevelBPE', 'ByteLevelBPE', or 'Unknown')
-        """
-        # Import here to avoid circular import
-        from .implementations import detect_tokenizer_type
-        return detect_tokenizer_type(path)
+    Returns:
+        str: The detected tokenizer type ('UTF16ByteLevelBPE', 'ByteLevelBPE', or 'Unknown')
+    """
+    # Import here to avoid circular import
+    from .implementations import detect_tokenizer_type
+    return detect_tokenizer_type(path)
+
+# Monkey patch the Tokenizer class to add smart loading capabilities
+_Tokenizer.smart_from_file = staticmethod(_smart_from_file)
+_Tokenizer.smart_from_str = staticmethod(_smart_from_str)
+_Tokenizer.detect_type = staticmethod(_detect_type)
+
+# Export the original Tokenizer class with added functionality
+Tokenizer = _Tokenizer

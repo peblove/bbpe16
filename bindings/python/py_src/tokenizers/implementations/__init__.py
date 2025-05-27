@@ -8,7 +8,7 @@ from .utf16_byte_level_bpe import UTF16ByteLevelBPETokenizer
 
 import json
 from typing import Union, Dict, Any
-from tokenizers import Tokenizer
+from tokenizers.tokenizers import Tokenizer
 
 
 def smart_tokenizer_from_file(path: str) -> Union[ByteLevelBPETokenizer, UTF16ByteLevelBPETokenizer, BaseTokenizer]:
@@ -71,78 +71,37 @@ def smart_tokenizer_from_dict(tokenizer_data: Dict[str, Any]) -> Union[ByteLevel
     is_utf16_pre = is_utf16_component(pre_tokenizer)
     
     # Check decoder  
-    decoder = tokenizer_data.get('decoder', {})
+    decoder = tokenizer_data.get('decoder')
     is_utf16_decoder = is_utf16_component(decoder)
     
     # Check post_processor
-    post_processor = tokenizer_data.get('post_processor', {})
+    post_processor = tokenizer_data.get('post_processor')
     is_utf16_post = is_utf16_component(post_processor)
     
-    # Determine tokenizer type based on components
+    # Load the base tokenizer first
+    try:
+        base_tokenizer = Tokenizer.from_str(json.dumps(tokenizer_data))
+    except Exception as e:
+        print(f"❌ Failed to load tokenizer: {e}")
+        return None
+    
+    # Determine tokenizer type based on components and wrap appropriately
     if is_utf16_pre or is_utf16_decoder or is_utf16_post:
         # This is a UTF16ByteLevel tokenizer
         print("🔍 Detected UTF16ByteLevelBPE tokenizer")
-        
-        # Load the base tokenizer first
-        base_tokenizer = Tokenizer.from_str(json.dumps(tokenizer_data))
-        
-        # Extract parameters for UTF16ByteLevelBPETokenizer
-        model_data = tokenizer_data.get('model', {})
-        vocab = model_data.get('vocab', {})
-        merges = model_data.get('merges', [])
-        
-        # Convert merges from list format to tuple format if needed
-        if merges and isinstance(merges[0], list):
-            merges = [tuple(merge) for merge in merges]
-        
-        # Extract other parameters
-        add_prefix_space = pre_tokenizer.get('add_prefix_space', False)
-        trim_offsets = post_processor.get('trim_offsets', False)
-        
-        # Create UTF16ByteLevelBPETokenizer with the loaded vocab and merges
-        utf16_tokenizer = UTF16ByteLevelBPETokenizer(
-            vocab=vocab,
-            merges=merges,
-            add_prefix_space=add_prefix_space,
-            trim_offsets=trim_offsets
-        )
-        
-        return utf16_tokenizer
+        return BaseTokenizer(base_tokenizer, {"type": "UTF16ByteLevelBPE"})
         
     elif (pre_tokenizer.get('type') == 'ByteLevel' or 
-          decoder.get('type') == 'ByteLevel' or 
-          post_processor.get('type') == 'ByteLevel'):
+          (decoder and decoder.get('type') == 'ByteLevel') or 
+          (post_processor and post_processor.get('type') == 'ByteLevel')):
         # This is a regular ByteLevel tokenizer
         print("🔍 Detected ByteLevelBPE tokenizer")
-        
-        # Extract parameters for ByteLevelBPETokenizer
-        model_data = tokenizer_data.get('model', {})
-        vocab = model_data.get('vocab', {})
-        merges = model_data.get('merges', [])
-        
-        # Convert merges from list format to tuple format if needed
-        if merges and isinstance(merges[0], list):
-            merges = [tuple(merge) for merge in merges]
-        
-        # Extract other parameters
-        add_prefix_space = pre_tokenizer.get('add_prefix_space', False)
-        trim_offsets = post_processor.get('trim_offsets', False)
-        
-        # Create ByteLevelBPETokenizer with the loaded vocab and merges
-        byte_tokenizer = ByteLevelBPETokenizer(
-            vocab=vocab,
-            merges=merges,
-            add_prefix_space=add_prefix_space,
-            trim_offsets=trim_offsets
-        )
-        
-        return byte_tokenizer
+        return BaseTokenizer(base_tokenizer, {"type": "ByteLevelBPE"})
     
     else:
         # Unknown or other tokenizer type, return generic BaseTokenizer
         print("🔍 Detected generic tokenizer type")
-        base_tokenizer = Tokenizer.from_str(json.dumps(tokenizer_data))
-        return BaseTokenizer(base_tokenizer, {})
+        return BaseTokenizer(base_tokenizer, {"type": "Unknown"})
 
 
 def detect_tokenizer_type(path: str) -> str:
@@ -165,16 +124,16 @@ def detect_tokenizer_type(path: str) -> str:
     
     # Check components
     pre_tokenizer = tokenizer_data.get('pre_tokenizer', {})
-    decoder = tokenizer_data.get('decoder', {})
-    post_processor = tokenizer_data.get('post_processor', {})
+    decoder = tokenizer_data.get('decoder')
+    post_processor = tokenizer_data.get('post_processor')
     
     if (is_utf16_component(pre_tokenizer) or 
         is_utf16_component(decoder) or 
         is_utf16_component(post_processor)):
         return 'UTF16ByteLevelBPE'
     elif (pre_tokenizer.get('type') == 'ByteLevel' or 
-          decoder.get('type') == 'ByteLevel' or 
-          post_processor.get('type') == 'ByteLevel'):
+          (decoder and decoder.get('type') == 'ByteLevel') or 
+          (post_processor and post_processor.get('type') == 'ByteLevel')):
         return 'ByteLevelBPE'
     else:
         return 'Unknown'
