@@ -28,6 +28,17 @@ versatility.
  - Does all the pre-processing: Truncate, Pad, add the special tokens your model needs.
  - **NEW**: UTF16ByteLevelBPETokenizer for enhanced CJK language support with up to 26% token reduction for Chinese text.
 
+## Why BBPE16 (UTF-16 Byte-level Byte-Pair Encoding)?
+
+**BBPE16** (UTF-16 Byte-level Byte-Pair Encoding) offers significant advantages over traditional Byte-Level BPE (BBPE), especially for multilingual and CJK (Chinese, Japanese, Korean) language environments:
+
+- **Superior Token Efficiency:** BBPE16 dramatically reduces the number of tokens required for CJK and multilingual text, resulting in fewer decoding steps for LLMs. This leads to lower service costs and faster response times, which is critical for production environments and large-scale applications.
+- **Seamless Integration:** When encoding, BBPE16 automatically converts UTF-8 strings to UTF-16 internally, and during decoding, it processes tokens based on UTF-16 and returns standard UTF-8 strings. This makes it extremely easy to use—no manual encoding or decoding steps are required by the user.
+- **Better for CJK and Multilingual Content:** Standard BBPE is optimized for English and other Latin-based languages, but is inefficient for CJK text. BBPE16 is specifically designed to address this inefficiency, providing up to 26% token reduction for Chinese and significant improvements for Korean and mixed-language content.
+- **Plug-and-Play for LLMs:** By reducing the number of tokens, BBPE16 not only improves computational efficiency but also enhances the user experience with faster model responses and lower latency.
+- **Same Alphabet, Superior Performance:** BBPE16 uses the same initial 256-character byte-level alphabet as standard BBPE, and guarantees superior performance at the same vocabulary size.
+- **Automatic Model Detection:** The tokenizer automatically distinguishes between BBPE and BBPE16 models when loading, ensuring seamless integration and ease of use without manual intervention.
+
 ## UTF16ByteLevelBPETokenizer
 
 **Author:** Hyunsik Kim <avantkim@gmail.com>
