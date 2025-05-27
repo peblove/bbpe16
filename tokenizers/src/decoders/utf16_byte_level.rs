@@ -39,22 +39,57 @@ fn utf16_bytes_char() -> HashMap<u8, char> {
         .collect()
 }
 
-/// Converts UTF-16 bytes back to UTF-8 string
+/// Converts UTF-16 bytes back to UTF-8 string with robust error handling
 fn utf16_bytes_to_utf8(bytes: &[u8]) -> Result<String> {
+    if bytes.is_empty() {
+        return Ok(String::new());
+    }
+    
+    let mut result = String::new();
+    
+    // Handle odd number of bytes by processing the last byte as a broken character
     if bytes.len() % 2 != 0 {
-        return Err("Invalid UTF-16 byte sequence: odd number of bytes".into());
+        // Process pairs of bytes normally
+        let mut utf16_units = Vec::with_capacity(bytes.len() / 2);
+        
+        for chunk in bytes[..bytes.len() - 1].chunks_exact(2) {
+            // Little-endian decoding
+            let unit = u16::from_le_bytes([chunk[0], chunk[1]]);
+            utf16_units.push(unit);
+        }
+        
+        // Convert the paired bytes to string
+        match String::from_utf16(&utf16_units) {
+            Ok(s) => result.push_str(&s),
+            Err(_) => result.push_str(&String::from_utf16_lossy(&utf16_units)),
+        }
+        
+        // Add replacement character for the last unpaired byte
+        result.push('\u{FFFD}'); // Unicode replacement character �
+        
+        // Log warning for debugging
+        //eprintln!("Warning: UTF-16 byte sequence had odd length ({}), last byte converted to replacement character", bytes.len());
+    } else {
+        // Even number of bytes - process normally
+        let mut utf16_units = Vec::with_capacity(bytes.len() / 2);
+        
+        for chunk in bytes.chunks_exact(2) {
+            // Little-endian decoding
+            let unit = u16::from_le_bytes([chunk[0], chunk[1]]);
+            utf16_units.push(unit);
+        }
+        
+        // Handle invalid UTF-16 sequences gracefully
+        match String::from_utf16(&utf16_units) {
+            Ok(s) => result = s,
+            Err(_) => {
+                // Fallback: use lossy conversion to handle invalid sequences
+                result = String::from_utf16_lossy(&utf16_units);
+            }
+        }
     }
     
-    let mut utf16_units = Vec::with_capacity(bytes.len() / 2);
-    
-    for chunk in bytes.chunks_exact(2) {
-        // Little-endian decoding
-        let unit = u16::from_le_bytes([chunk[0], chunk[1]]);
-        utf16_units.push(unit);
-    }
-    
-    String::from_utf16(&utf16_units)
-        .map_err(|e| format!("Invalid UTF-16 sequence: {}", e).into())
+    Ok(result)
 }
 
 static CHAR_UTF16_BYTES: Lazy<HashMap<char, u8>> =
@@ -110,6 +145,16 @@ mod tests {
         let bytes = vec![0x00, 0xAC, 0x98, 0xB0, 0xE4, 0xB2];
         let result = utf16_bytes_to_utf8(&bytes).unwrap();
         assert_eq!(result, "가나다");
+        
+        // Test empty bytes
+        let empty_bytes = vec![];
+        let result = utf16_bytes_to_utf8(&empty_bytes).unwrap();
+        assert_eq!(result, "");
+        
+        // Test odd number of bytes (should be handled gracefully)
+        let odd_bytes = vec![0x48, 0x00, 0x65]; // "He" + incomplete byte
+        let result = utf16_bytes_to_utf8(&odd_bytes).unwrap();
+        assert_eq!(result, "H�"); // Should convert last byte to replacement character
     }
 
     #[test]
