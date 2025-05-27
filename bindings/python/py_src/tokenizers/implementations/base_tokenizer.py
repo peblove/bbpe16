@@ -1,18 +1,21 @@
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING
 
-from tokenizers import AddedToken, EncodeInput, Encoding, InputSequence, Tokenizer
+from tokenizers import AddedToken, EncodeInput, Encoding, InputSequence
 from tokenizers.decoders import Decoder
 from tokenizers.models import Model
 from tokenizers.normalizers import Normalizer
 from tokenizers.pre_tokenizers import PreTokenizer
 from tokenizers.processors import PostProcessor
 
+if TYPE_CHECKING:
+    from tokenizers import Tokenizer
+
 
 Offsets = Tuple[int, int]
 
 
 class BaseTokenizer:
-    def __init__(self, tokenizer: Tokenizer, parameters=None):
+    def __init__(self, tokenizer: "Tokenizer", parameters=None):
         self._tokenizer = tokenizer
         self._parameters = parameters if parameters is not None else {}
 
