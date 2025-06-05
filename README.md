@@ -65,7 +65,7 @@ If you use UTF16ByteLevelBPETokenizer in your research or applications, please c
   month={May},  
   note={Implementation based on HuggingFace Tokenizers library},
   email={avantkim@gmail.com},
-  url={https://github.com/peblove/tokenizers}
+  url={https://github.com/peblove/bbpe16}
 }
 ```
 
