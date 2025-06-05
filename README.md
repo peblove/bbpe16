@@ -91,7 +91,7 @@ We provide bindings to the following languages (more to come!):
 
 You can install from source using:
 ```bash
-pip install git+https://github.com/peblove/tokenizers.git#subdirectory=bindings/python
+pip install git+https://github.com/peblove/bbpe16.git#subdirectory=bindings/python
 ```
 
 our install the released versions with
